@@ -1,0 +1,46 @@
+{
+  "model_name": "PonziShield GraphClassifier",
+  "model_version": "v1.1.0",
+  "model_type": "calibrated_logistic_graph_classifier",
+  "description": "Embedded graph-classification model for PonziShield transfer graphs. It applies ethXpose-style 2-hop transaction-neighborhood features and produces p_graph for risk fusion.",
+  "feature_scope": "2-hop transfer neighborhood centered on the analyzed contract",
+  "calibration": {
+    "method": "logistic calibration",
+    "positive_class": "ponzi_like_transaction_graph",
+    "threshold_low": 0.35,
+    "threshold_high": 0.7
+  },
+  "intercept": -2.35,
+  "weights": {
+    "tx_count_norm": 0.95,
+    "fan_in_norm": 1.2,
+    "fan_out_norm": 0.8,
+    "in_out_balance": 0.6,
+    "same_block_payout_rate": 1.25,
+    "recycling_ratio": 1.4,
+    "payout_ratio": 0.9,
+    "degree_centralization": 0.75,
+    "temporal_burst": 0.55,
+    "value_concentration": 0.45,
+    "neighborhood_density": 0.7,
+    "reciprocity_rate": 0.5
+  },
+  "feature_schema": {
+    "tx_count_norm": "Normalized number of transfer events in the contract neighborhood.",
+    "fan_in_norm": "Normalized count of unique inbound funders.",
+    "fan_out_norm": "Normalized count of unique outbound receivers.",
+    "in_out_balance": "Balance between inbound and outbound counterparties.",
+    "same_block_payout_rate": "Share of payouts occurring in blocks that also contain inbound funding.",
+    "recycling_ratio": "Share of payouts that follow inbound funding within a short block window.",
+    "payout_ratio": "Total outbound value divided by total inbound value.",
+    "degree_centralization": "Contract degree normalized by possible neighborhood edges.",
+    "temporal_burst": "Maximum same-block transfer burst normalized by block span.",
+    "value_concentration": "Largest counterparty flow divided by total counterparty flow.",
+    "neighborhood_density": "Directed edge density of the 2-hop transaction neighborhood.",
+    "reciprocity_rate": "Rate of bidirectional edges in the 2-hop neighborhood."
+  },
+  "thresholds": {
+    "low": 0.35,
+    "high": 0.7
+  }
+}

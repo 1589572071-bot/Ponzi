@@ -1,0 +1,83 @@
+{
+  "model_name": "PonziShield GraphClassifier",
+  "model_version": "ethxpose-local-20260626",
+  "model_type": "trained_logistic_graph_classifier",
+  "description": "Trained PonziShield graph classifier using ethXpose-style 2-hop transaction-neighborhood features from labeled Ethereum transaction graphs.",
+  "feature_scope": "2-hop transfer neighborhood centered on the analyzed contract",
+  "calibration": {
+    "method": "logistic regression",
+    "positive_class": "ponzi_like_transaction_graph",
+    "threshold_low": 0.35,
+    "threshold_high": 0.7
+  },
+  "intercept": -0.08757797,
+  "weights": {
+    "tx_count_norm": 0.21727812,
+    "fan_in_norm": 0.26391685,
+    "fan_out_norm": 0.26391685,
+    "in_out_balance": -0.06366208,
+    "same_block_payout_rate": 1.35141529,
+    "recycling_ratio": 2.70283057,
+    "payout_ratio": -1.1693655,
+    "degree_centralization": -0.4028188,
+    "temporal_burst": 1.13860816,
+    "value_concentration": -1.28650935,
+    "neighborhood_density": -0.06366208,
+    "reciprocity_rate": 0.0
+  },
+  "feature_schema": {
+    "tx_count_norm": "Normalized number of transfer events in the contract neighborhood.",
+    "fan_in_norm": "Normalized count of unique inbound funders.",
+    "fan_out_norm": "Normalized count of unique outbound receivers.",
+    "in_out_balance": "Balance between inbound and outbound counterparties.",
+    "same_block_payout_rate": "Share of payouts occurring in blocks that also contain inbound funding.",
+    "recycling_ratio": "Share of payouts that follow inbound funding within a short block window.",
+    "payout_ratio": "Total outbound value divided by total inbound value.",
+    "degree_centralization": "Contract degree normalized by possible neighborhood edges.",
+    "temporal_burst": "Maximum same-block transfer burst normalized by block span.",
+    "value_concentration": "Largest counterparty flow divided by total counterparty flow.",
+    "neighborhood_density": "Directed edge density of the 2-hop transaction neighborhood.",
+    "reciprocity_rate": "Rate of bidirectional edges in the 2-hop neighborhood."
+  },
+  "thresholds": {
+    "low": 0.35,
+    "high": 0.7
+  },
+  "training": {
+    "labels": "data/sample/labels.csv",
+    "transactions": "data/sample/transactions.csv",
+    "sample_count": 4,
+    "train_count": 2,
+    "test_count": 2,
+    "positive_count": 2,
+    "negative_count": 2,
+    "epochs": 200,
+    "learning_rate": 0.25,
+    "l2": 0.01,
+    "seed": 42
+  },
+  "metrics": {
+    "train": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "auc": 1.0,
+      "tp": 1,
+      "fp": 0,
+      "tn": 1,
+      "fn": 0
+    },
+    "test": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "auc": 1.0,
+      "tp": 1,
+      "fp": 0,
+      "tn": 1,
+      "fn": 0
+    }
+  }
+}

@@ -1,0 +1,35 @@
+# Python
+**/.venv/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Node
+**/node_modules/
+*.tsbuildinfo
+
+# Java build & bundled toolchain (too large for GitHub)
+**/.tools/
+**/target/
+
+# Downloaded datasets
+**/data/raw/
+
+# OS / IDE
+.DS_Store
+.vscode/
+*.swp
+
+# Archives & secrets
+*.zip
+*.tar.gz
+.env
+.env.*
+
+# Logs & runtime
+*.log
+**/data/transfers.jsonl
+
+# Desktop exports (local only)
+Desktop/

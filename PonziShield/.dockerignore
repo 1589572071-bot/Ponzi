@@ -1,0 +1,10 @@
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.git
+**/dist
+eth-whitepaper-java-main
+*.zip
+.DS_Store
+ponzi-detector/data/raw

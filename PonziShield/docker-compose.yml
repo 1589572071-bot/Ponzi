@@ -1,0 +1,18 @@
+services:
+  ponzi-detector:
+    build:
+      context: ./ponzi-detector
+    container_name: ponzi-detector
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  ponzi-web:
+    build:
+      context: ./ponzi-web
+    container_name: ponzi-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - ponzi-detector
+    restart: unless-stopped
