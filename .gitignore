@@ -30,6 +30,7 @@
 # Logs & runtime
 *.log
 **/data/transfers.jsonl
+**/data/pending_transfers.jsonl
 
 # Desktop exports (local only)
 Desktop/

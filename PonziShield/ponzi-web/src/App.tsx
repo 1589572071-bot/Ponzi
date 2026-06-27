@@ -3,9 +3,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Activity,
   AlertTriangle,
-  Braces,
   Copy,
   Download,
+  FileText,
   Gauge,
   GitBranch,
   Keyboard,
@@ -313,7 +313,7 @@ function Tabs({ activeTab, onChange }: { activeTab: Tab; onChange: (tab: Tab) =>
     { id: "overview", label: "Overview", icon: <Gauge size={16} /> },
     { id: "graph", label: "Graph", icon: <GitBranch size={16} /> },
     { id: "lifecycle", label: "Lifecycle", icon: <Activity size={16} /> },
-    { id: "report", label: "Report", icon: <Braces size={16} /> },
+    { id: "report", label: "Report", icon: <FileText size={16} /> },
   ];
   return (
     <nav className="tabs">
@@ -527,24 +527,161 @@ function ReportTab({ report }: { report: AnalysisReport }) {
   const tokenReport = mockReport(CONTRACTS[1].address);
   return (
     <div className="report-grid">
-      <section className="panel json-panel">
-        <div className="panel-header">
-          <div className="section-title">完整 JSON 视图</div>
-          <div className="icon-actions">
-            <button onClick={() => navigator.clipboard.writeText(JSON.stringify(report, null, 2))}><Copy size={16} />复制</button>
-            <button onClick={() => downloadJson(report)}><Download size={16} />下载</button>
-          </div>
-        </div>
-        <pre>{JSON.stringify(report, null, 2)}</pre>
-      </section>
+      <VisualReportDocument report={report} />
       <section className="panel compare-panel">
         <div className="section-title">对比模式</div>
+        <p className="panel-note">当前选中合约与正常 Token 对照组的风险差异。</p>
         <div className="compare-cards">
-          <CompareCard title="PonziContract" report={mockReport(CONTRACTS[0].address)} />
+          <CompareCard title="当前合约" report={report} />
           <CompareCard title="TokenContract" report={tokenReport} />
         </div>
       </section>
     </div>
+  );
+}
+
+function VisualReportDocument({ report }: { report: AnalysisReport }) {
+  const dimensions = Object.entries(report.lifecycle.dimensions);
+  const intermediaryFactor = Math.min(1, report.intermediaries.length / 3);
+  const channels = [
+    {
+      key: "p_graph",
+      label: "图分类通道",
+      weight: report.weights.w1,
+      value: report.graph_analysis.p_graph,
+      detail: `子图 ${report.graph_analysis.node_count} 节点 · ${report.graph_analysis.edge_count} 边 · p_graph ${report.graph_analysis.p_graph.toFixed(3)}`,
+    },
+    {
+      key: "lifecycle",
+      label: "生命周期通道",
+      weight: report.weights.w2,
+      value: report.lifecycle.score,
+      detail: `${stageLabel(report.lifecycle.stage)} · 存续 ${report.lifecycle.age_blocks} blocks`,
+    },
+    {
+      key: "intermediary",
+      label: "中介节点通道",
+      weight: report.weights.w3,
+      value: intermediaryFactor,
+      detail: `${report.intermediaries.length} 个中介节点 · 因子 ${intermediaryFactor.toFixed(2)}`,
+    },
+  ];
+
+  return (
+    <section className="panel report-document">
+      <div className="report-doc-header">
+        <div>
+          <div className="report-doc-kicker">PonziShield Analysis Report</div>
+          <h2 className="report-doc-title">合约风险分析报告</h2>
+          <div className="report-doc-meta">
+            <span>{shortAddress(report.contract_address)}</span>
+            <span>{report.analyzed_at.replace("T", " ").replace("Z", " UTC")}</span>
+            <span>区块高度 #{report.lifecycle.age_blocks}</span>
+          </div>
+        </div>
+        <div className="report-doc-actions">
+          <button onClick={() => navigator.clipboard.writeText(JSON.stringify(report, null, 2))}>
+            <Copy size={16} /> 复制 JSON
+          </button>
+          <button onClick={() => downloadJson(report)}>
+            <Download size={16} /> 下载 JSON
+          </button>
+        </div>
+      </div>
+
+      <div className={`report-verdict ${report.risk_level.toLowerCase()}`}>
+        <div className="report-verdict-score">
+          <strong>{report.risk_score.toFixed(1)}</strong>
+          <span>{report.risk_level}</span>
+        </div>
+        <div className="report-verdict-copy">
+          <strong>{verdictTitle(report)}</strong>
+          <p>{verdictSummary(report)}</p>
+        </div>
+        <RiskGauge score={report.risk_score} level={report.risk_level} />
+      </div>
+
+      <div className="report-section">
+        <div className="report-section-title">三通道融合</div>
+        <div className="report-channel-grid">
+          {channels.map((channel) => (
+            <article className="report-channel-card" key={channel.key}>
+              <header>
+                <strong>{channel.label}</strong>
+                <small>权重 {channel.weight.toFixed(2)}</small>
+              </header>
+              <div className="report-channel-bar">
+                <div style={{ width: `${Math.min(100, channel.value * 100)}%` }} />
+              </div>
+              <span className="report-channel-value">{(channel.value * 100).toFixed(1)}%</span>
+              <p>{channel.detail}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="report-section report-two-col">
+        <div className="report-block">
+          <div className="report-section-title">生命周期阶段</div>
+          <div className={`report-stage-badge ${report.lifecycle.stage.toLowerCase()}`}>
+            {stageLabel(report.lifecycle.stage)}
+          </div>
+          <p>{stageCopy(report.lifecycle.stage)}</p>
+          <div className="report-metric-row">
+            <span>阶段得分</span>
+            <strong>{(report.lifecycle.score * 100).toFixed(1)}%</strong>
+          </div>
+          <div className="report-metric-row">
+            <span>存续区块</span>
+            <strong>{report.lifecycle.age_blocks}</strong>
+          </div>
+        </div>
+
+        <div className="report-block">
+          <div className="report-section-title">五维特征证据</div>
+          <div className="report-dimension-list">
+            {dimensions.map(([key, dimension]) => (
+              <article className={`report-dimension-item ${dimension.detected ? "detected" : ""}`} key={key}>
+                <div className="report-dimension-head">
+                  <strong>{dimensionLabel(key)}</strong>
+                  <span>{dimension.detected ? "已检出" : "未检出"}</span>
+                  <em>{Math.round(((dimension.score ?? (dimension.detected ? 1 : 0.18)) * 100))}%</em>
+                </div>
+                <p>{dimension.evidence}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="report-section">
+        <div className="report-section-title">中介节点摘要</div>
+        {report.intermediaries.length === 0 ? (
+          <div className="report-empty">未检测到显著中介节点，资金流以合约直连为主。</div>
+        ) : (
+          <div className="report-intermediary-grid">
+            {report.intermediaries.map((node) => (
+              <article className="report-intermediary-card" key={node.address}>
+                <strong>{shortAddress(node.address)}</strong>
+                <span className="tag danger">{roleLabel(node.role)}</span>
+                <div className="report-metric-row">
+                  <span>介数中心性</span>
+                  <strong>{node.betweenness.toFixed(3)}</strong>
+                </div>
+                <div className="report-metric-row">
+                  <span>入度 / 出度</span>
+                  <strong>{node.in_degree} / {node.out_degree}</strong>
+                </div>
+                <div className="report-metric-row">
+                  <span>平均停留</span>
+                  <strong>{node.avg_holding_blocks} blocks</strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -581,7 +718,7 @@ function BottomDrawer({ report, selectedAddress }: { report: AnalysisReport; sel
   const curl = `curl -X POST ${API_BASE}/api/v1/analyze -H 'Content-Type: application/json' -d '{"contract_address":"${selectedAddress}","current_block":${report.lifecycle.age_blocks}}'`;
   return (
     <footer className="bottom-drawer">
-      <span>JSON Report / cURL</span>
+      <span>分析报告 · cURL</span>
       <code>{curl}</code>
       <button onClick={() => navigator.clipboard.writeText(curl)}><Copy size={14} /> 复制</button>
     </footer>
@@ -667,6 +804,55 @@ function stageCopy(stage: string) {
     STAGNATION: "提款限制、流出放缓",
     COLLAPSE: "余额下降、中介消失",
   }[stage] ?? "";
+}
+
+function stageLabel(stage: AnalysisReport["lifecycle"]["stage"]) {
+  return {
+    FUNDRAISING: "募资期",
+    PAYOUT: "分红期",
+    STAGNATION: "停滞期",
+    COLLAPSE: "崩溃期",
+  }[stage];
+}
+
+function dimensionLabel(key: string) {
+  return {
+    fund_flow: "资金流向",
+    profit_logic: "利润逻辑",
+    referral_mechanism: "推荐机制",
+    withdrawal_control: "提款控制",
+    camouflage: "伪装命名",
+  }[key] ?? key;
+}
+
+function roleLabel(role: IntermediaryNode["role"]) {
+  return {
+    RELAY: "中继节点",
+    ACCUMULATOR: "沉淀节点",
+    DISTRIBUTOR: "分发节点",
+  }[role];
+}
+
+function verdictTitle(report: AnalysisReport) {
+  if (report.risk_level === "HIGH") {
+    return "高风险：疑似庞氏结构";
+  }
+  if (report.risk_level === "MEDIUM") {
+    return "中等风险：存在可疑模式";
+  }
+  return "低风险：未发现典型庞氏特征";
+}
+
+function verdictSummary(report: AnalysisReport) {
+  const hits = Object.values(report.lifecycle.dimensions).filter((item) => item.detected).length;
+  const stage = stageLabel(report.lifecycle.stage);
+  if (report.risk_level === "HIGH") {
+    return `合约处于${stage}，五维特征命中 ${hits}/5，图分类 p_graph=${report.graph_analysis.p_graph.toFixed(2)}，并识别 ${report.intermediaries.length} 个中介节点。`;
+  }
+  if (report.risk_level === "MEDIUM") {
+    return `合约处于${stage}，部分维度已触发（${hits}/5），建议结合 Graph 与 Tx Stream 继续观察。`;
+  }
+  return `合约处于${stage}，五维特征命中 ${hits}/5，整体更接近正常 Token 行为。`;
 }
 
 function downloadJson(report: AnalysisReport) {

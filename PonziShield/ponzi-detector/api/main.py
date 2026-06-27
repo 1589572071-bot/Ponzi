@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -143,18 +144,21 @@ def analyze(payload: AnalyzeRequest) -> dict[str, object]:
 
 
 @app.post("/api/v1/demo")
-def run_demo() -> dict[str, object]:
+async def run_demo() -> dict[str, object]:
     if not JAVA_PROJECT_DIR.exists():
         return {
             "started": False,
             "error": "Java demo project not available in this deployment",
         }
+    api_url = os.environ.get("ANALYSIS_API_URL", "http://127.0.0.1:8000")
     command = (
         'source ".tools/env.sh" && '
         "mvn -q -DskipTests exec:java "
-        "-Dexec.mainClass=dev.naoki.ethwhite.ponzi.PonziDemoMain"
+        "-Dexec.mainClass=dev.naoki.ethwhite.ponzi.PonziDemoMain "
+        f"-Danalysis.api.url={api_url}"
     )
-    result = subprocess.run(
+    result = await asyncio.to_thread(
+        subprocess.run,
         ["bash", "-lc", command],
         cwd=JAVA_PROJECT_DIR,
         text=True,
