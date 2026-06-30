@@ -1,29 +1,29 @@
 {
   "model_name": "PonziShield GraphClassifier",
-  "model_version": "v1.1.0",
-  "model_type": "calibrated_logistic_graph_classifier",
-  "description": "Embedded graph-classification model for PonziShield transfer graphs. It applies ethXpose-style 2-hop transaction-neighborhood features and produces p_graph for risk fusion.",
+  "model_version": "ethxpose-local-20260630",
+  "model_type": "trained_logistic_graph_classifier",
+  "description": "Trained PonziShield graph classifier using ethXpose-style 2-hop transaction-neighborhood features from labeled Ethereum transaction graphs.",
   "feature_scope": "2-hop transfer neighborhood centered on the analyzed contract",
   "calibration": {
-    "method": "logistic calibration",
+    "method": "logistic regression",
     "positive_class": "ponzi_like_transaction_graph",
     "threshold_low": 0.35,
     "threshold_high": 0.7
   },
-  "intercept": -2.35,
+  "intercept": -1.42240269,
   "weights": {
-    "tx_count_norm": 0.95,
-    "fan_in_norm": 1.2,
-    "fan_out_norm": 0.8,
-    "in_out_balance": 0.6,
-    "same_block_payout_rate": 1.25,
-    "recycling_ratio": 1.4,
-    "payout_ratio": 0.9,
-    "degree_centralization": 0.75,
-    "temporal_burst": 0.55,
-    "value_concentration": 0.45,
-    "neighborhood_density": 0.7,
-    "reciprocity_rate": 0.5
+    "tx_count_norm": -0.06041333,
+    "fan_in_norm": 0.3147742,
+    "fan_out_norm": 0.83293649,
+    "in_out_balance": 0.07462494,
+    "same_block_payout_rate": 0.27573354,
+    "recycling_ratio": 0.27573354,
+    "payout_ratio": -0.00757634,
+    "degree_centralization": -1.23860036,
+    "temporal_burst": 0.22315457,
+    "value_concentration": 0.42057825,
+    "neighborhood_density": -0.29569472,
+    "reciprocity_rate": 2.1874011
   },
   "feature_schema": {
     "tx_count_norm": "Normalized number of transfer events in the contract neighborhood.",
@@ -42,5 +42,42 @@
   "thresholds": {
     "low": 0.35,
     "high": 0.7
+  },
+  "training": {
+    "labels": "/Users/anchenrui/Desktop/Block Chain/Project/Ponzi-main/PonziShield/ponzi-detector/data/processed/labels.csv",
+    "transactions": "/Users/anchenrui/Desktop/Block Chain/Project/Ponzi-main/PonziShield/ponzi-detector/data/raw/xblock/transactions.csv",
+    "sample_count": 308,
+    "train_count": 232,
+    "test_count": 76,
+    "positive_count": 153,
+    "negative_count": 155,
+    "epochs": 2500,
+    "learning_rate": 0.25,
+    "l2": 0.01,
+    "seed": 42
+  },
+  "metrics": {
+    "train": {
+      "accuracy": 0.8362,
+      "precision": 0.8468,
+      "recall": 0.8174,
+      "f1": 0.8319,
+      "auc": 0.9016,
+      "tp": 94,
+      "fp": 17,
+      "tn": 100,
+      "fn": 21
+    },
+    "test": {
+      "accuracy": 0.75,
+      "precision": 0.7568,
+      "recall": 0.7368,
+      "f1": 0.7467,
+      "auc": 0.8663,
+      "tp": 28,
+      "fp": 9,
+      "tn": 29,
+      "fn": 10
+    }
   }
 }

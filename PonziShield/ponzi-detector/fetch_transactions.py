@@ -34,21 +34,10 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-# macOS 上 Python 3 的 SSL 证书常出问题，自动降级为跳过验证
+# macOS 上 Python 3.12+ 的 SSL 证书常出问题，直接跳过验证（仅限本地开发）
 _ssl_ctx = ssl.create_default_context()
-try:
-    urllib.request.urlopen(
-        urllib.request.Request("https://api.etherscan.io"),
-        timeout=5,
-        context=_ssl_ctx,
-    )
-except ssl.SSLCertVerificationError:
-    _ssl_ctx = ssl.create_default_context()
-    _ssl_ctx.check_hostname = False
-    _ssl_ctx.verify_mode = ssl.CERT_NONE
-    print("⚠  SSL 证书验证失败，已跳过验证（仅限本地开发）")
-except Exception:
-    pass
+_ssl_ctx.check_hostname = False
+_ssl_ctx.verify_mode = ssl.CERT_NONE
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_LABELS = ROOT / "data" / "processed" / "labels.csv"
