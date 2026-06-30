@@ -1,6 +1,7 @@
 package dev.naoki.ethwhite.core;
 
 import dev.naoki.ethwhite.crypto.Keccak;
+import dev.naoki.ethwhite.ponzi.EventType;
 import dev.naoki.ethwhite.ponzi.FundFlowEvent;
 import dev.naoki.ethwhite.util.Bytes;
 import dev.naoki.ethwhite.util.PatriciaTrie;
@@ -55,6 +56,10 @@ public final class WorldState {
     }
 
     public void transfer(Address from, Address to, BigInteger amount) {
+        transfer(from, to, amount, EventType.TRANSFER);
+    }
+
+    public void transfer(Address from, Address to, BigInteger amount, EventType eventType) {
         if (amount.signum() < 0) {
             throw new IllegalArgumentException("Transfer amount must not be negative");
         }
@@ -64,7 +69,7 @@ public final class WorldState {
         getOrCreate(from).debit(amount);
         getOrCreate(to).credit(amount);
         if (transferCapture != null) {
-            transferCapture.record(from, to, amount);
+            transferCapture.record(from, to, amount, eventType);
         }
     }
 
@@ -142,14 +147,16 @@ public final class WorldState {
             this.txHash = txHash.clone();
         }
 
-        private void record(Address from, Address to, BigInteger amount) {
+        private void record(Address from, Address to, BigInteger amount,
+                           EventType eventType) {
             events.add(new FundFlowEvent(
                     from,
                     to,
                     amount,
                     blockContext.number(),
                     txHash,
-                    blockContext.timestamp()
+                    blockContext.timestamp(),
+                    eventType
             ));
         }
 

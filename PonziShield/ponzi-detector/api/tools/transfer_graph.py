@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import math
 from threading import Lock
 from typing import Any
@@ -16,6 +16,7 @@ class TransferEvent:
     block_number: int
     tx_hash: str
     timestamp: int
+    event_type: str = "TRANSFER"          # ← innovation 2: event type annotation
 
 
 class TransferGraph:
@@ -34,6 +35,7 @@ class TransferGraph:
                 block_number=event.block_number,
                 tx_hash=event.tx_hash,
                 timestamp=event.timestamp,
+                event_type=event.event_type,       # ← stored on the edge
             )
 
     def summary(self) -> dict[str, int]:
@@ -46,6 +48,22 @@ class TransferGraph:
     def events(self, limit: int = 200) -> list[TransferEvent]:
         with self._lock:
             return list(self._events[-limit:])
+
+    def events_with_type(self) -> list[dict[str, Any]]:
+        """Return all events as dicts with event_type – used by /history."""
+        with self._lock:
+            return [
+                {
+                    "from": e.from_address,
+                    "to": e.to_address,
+                    "value": str(e.value),
+                    "block_number": e.block_number,
+                    "tx_hash": e.tx_hash,
+                    "timestamp": e.timestamp,
+                    "event_type": e.event_type,
+                }
+                for e in self._events
+            ]
 
     def graph_for(
         self,
@@ -70,7 +88,7 @@ class TransferGraph:
                 frontier = neighbors
 
             subgraph = self._graph.subgraph(selected_nodes)
-            nodes = []
+            nodes: list[dict[str, Any]] = []
             total = max(1, len(subgraph.nodes))
             for index, node in enumerate(subgraph.nodes):
                 if node == normalized:
@@ -88,12 +106,13 @@ class TransferGraph:
                     "degree": subgraph.degree(node),
                 })
 
-            edges = []
+            edges: list[dict[str, Any]] = []
             for from_address, to_address, data in subgraph.edges(data=True):
                 edges.append({
                     "from": from_address,
                     "to": to_address,
                     "value": data["weight"],
                     "block_number": data["block_number"],
+                    "event_type": data.get("event_type", "TRANSFER"),
                 })
             return {"nodes": nodes, "edges": edges}

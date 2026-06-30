@@ -44,6 +44,7 @@ class TransferRequest(BaseModel):
     block_number: int
     tx_hash: str
     timestamp: int
+    event_type: str = "TRANSFER"   # ← Innovation 2: accept event type from Java emitter
 
 
 class AnalyzeRequest(BaseModel):
@@ -84,6 +85,7 @@ def ingest_transfer(payload: TransferRequest) -> dict[str, object]:
         block_number=payload.block_number,
         tx_hash=payload.tx_hash.lower(),
         timestamp=payload.timestamp,
+        event_type=payload.event_type,           # ← Innovation 2: propagate event type
     )
     transfer_graph.add_event(event)
     append_transfer(payload)
@@ -92,17 +94,7 @@ def ingest_transfer(payload: TransferRequest) -> dict[str, object]:
 
 @app.get("/api/v1/history")
 def history() -> list[dict[str, object]]:
-    return [
-        {
-            "from": event.from_address,
-            "to": event.to_address,
-            "value": str(event.value),
-            "block_number": event.block_number,
-            "tx_hash": event.tx_hash,
-            "timestamp": event.timestamp,
-        }
-        for event in transfer_graph.events()
-    ]
+    return transfer_graph.events_with_type()   # ← now includes event_type
 
 
 @app.get("/api/v1/graph/{address}")
