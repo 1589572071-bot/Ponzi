@@ -13,8 +13,10 @@
 **/.tools/
 **/target/
 
-# Downloaded datasets
-**/data/raw/
+# Downloaded datasets (raw data excluded, use zip instead)
+**/data/raw/*.csv
+**/data/raw/cache/
+**/data/raw/*.zip
 
 # OS / IDE
 .DS_Store
