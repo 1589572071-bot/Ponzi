@@ -118,11 +118,22 @@ def analyze(payload: AnalyzeRequest) -> dict[str, object]:
         payload.current_block,
         is_demo_contract=contract in DEMO_CONTRACTS,
     )
-    risk = fuse_risk(float(graph_prediction["p_graph"]), float(lifecycle["score"]), len(intermediaries))
+    risk = fuse_risk(graph_prediction, lifecycle, intermediaries)
     return {
         "contract_address": payload.contract_address,
         "risk_score": risk["risk_score"],
         "risk_level": risk["risk_level"],
+        "risk_fusion": {
+            "base_score": risk["base_score"],
+            "contributions": risk["contributions"],
+            "dominant_channel": risk["dominant_channel"],
+            "calibration": risk["calibration"],
+            "confidence": risk["confidence"],
+            "confidence_level": risk["confidence_level"],
+            "confidence_factors": risk["confidence_factors"],
+            "reasons": risk["reasons"],
+            "summary": risk["summary"],
+        },
         "lifecycle": lifecycle,
         "graph_analysis": {
             **graph_prediction,
